@@ -4,10 +4,9 @@ import org.app.movie.controller.exception.MovieNotFoundException;
 import org.app.movie.db.entity.Movie;
 import org.app.movie.db.repository.MovieRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -32,7 +31,7 @@ public class MovieServiceImpl implements MovieService{
             throw new IllegalArgumentException("Query parameter is required.");
         }
 
-        List<Movie> result = movieRepository.findByTitleContainingIgnoreCase(query);
+        List<Movie> result = new ArrayList<>(movieRepository.findByTitleContainingIgnoreCase(query));
 
         if (filter != null && !filter.isBlank()) {
             Map<String, String> filters = parseFilterString(filter);
@@ -41,40 +40,47 @@ public class MovieServiceImpl implements MovieService{
                 String key = entry.getKey().toLowerCase();
                 String value = entry.getValue();
 
-                result = switch (key) {
-                    case "genre" -> result.stream()
-                            .filter(m -> m.getGenres() != null && m.getGenres().toLowerCase().contains(value.toLowerCase()))
-                            .toList();
-                    case "language" -> result.stream()
-                            .filter(m -> m.getLanguage() != null && m.getLanguage().equalsIgnoreCase(value))
-                            .toList();
-                    case "releasedate" -> result.stream()
-                            .filter(m -> m.getReleaseDate() != null && m.getReleaseDate().toString().equals(value))
-                            .toList();
-                    case "rating" -> result.stream()
-                            .filter(m -> m.getRating() != null && m.getRating().toString().equals(value))
-                            .toList();
-                    case "runtime" -> result.stream()
-                            .filter(m -> m.getRuntime() != null && m.getRuntime().toString().equals(value))
-                            .toList();
-                    case "overview" -> result.stream()
-                            .filter(m -> m.getOverview() != null && m.getOverview().toString().equals(value))
-                            .toList();
-                    default -> result;
-                };
+                result = result.stream()
+                        .filter(m -> {
+                            switch (key) {
+                                case "genre":
+                                    return m.getGenres() != null && m.getGenres().toLowerCase().contains(value.toLowerCase());
+                                case "language":
+                                    return m.getLanguage() != null && m.getLanguage().equalsIgnoreCase(value);
+                                case "releasedate":
+                                    return m.getReleaseDate() != null && m.getReleaseDate().toString().equals(value);
+                                case "rating":
+                                    return m.getRating() != null && m.getRating().toString().equals(value);
+                                case "runtime":
+                                    return m.getRuntime() != null && m.getRuntime().toString().equals(value);
+                                case "overview":
+                                    return m.getOverview() != null && m.getOverview().equalsIgnoreCase(value);
+                                default:
+                                    return true;
+                            }
+                        })
+                        .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
             }
         }
 
-        if (sortBy != null) {
+        if (sortBy != null && !sortBy.isBlank()) {
             switch (sortBy) {
-                case "rating" -> result.sort(Comparator.comparing(Movie::getRating).reversed());
-                case "releaseDate" -> result.sort(Comparator.comparing(Movie::getReleaseDate).reversed());
+                case "rating" -> result.sort(
+                        Comparator.comparing(Movie::getRating, Comparator.nullsLast(Double::compareTo)).reversed()
+                );
+                case "releaseDate" -> result.sort(
+                        Comparator.comparing(Movie::getReleaseDate, Comparator.nullsLast(java.time.LocalDate::compareTo)).reversed()
+                );
             }
         }
-        if(result != null && result.isEmpty())
-            throw new MovieNotFoundException("Movie not found by "+query);
+
+        if (result == null || result.isEmpty()) {
+            throw new MovieNotFoundException("Movie not found by query: " + query);
+        }
+
         return result;
     }
+
 
     @Override
     public List<Movie> getTop50PopularMovies() {
