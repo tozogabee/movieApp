@@ -12,5 +12,5 @@ import java.util.UUID;
 public interface MovieService {
     Movie getDetailedInformationById(UUID id);
     List<Movie> searchMovies(String query, String sortBy, String filter);
-    Page<Movie> findAll(Pageable pageAble);
+    List<Movie> getTop50PopularMovies();
 }

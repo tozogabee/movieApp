@@ -1,17 +1,15 @@
 package org.app.movie.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.app.movie.controller.mapper.MovieMapper;
 import org.app.movie.controller.responses.MovieDetailResponse;
 import org.app.movie.controller.responses.MovieSearchResponse;
-import org.app.movie.controller.responses.PagedResponse;
 import org.app.movie.db.entity.Movie;
 import org.app.movie.service.MovieService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,6 +21,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/movie")
+@Tag(name = "Movies", description = "Operation to the movies")
 public class MovieController {
 
     private MovieService movieService;
@@ -42,6 +41,7 @@ public class MovieController {
     }
 
     @GetMapping("/search")
+    @Operation(summary = "search by title and filter/sort by fields optionally", description = "search by title and filter/sort by fields optionally")
     public ResponseEntity<List<MovieSearchResponse>> searchMovies(
             @RequestParam("query") String query,
             @RequestParam(value = "sort_by", required = false) String sortBy,
@@ -52,28 +52,34 @@ public class MovieController {
     }
 
     @GetMapping("/popular")
-    public ResponseEntity<PagedResponse<MovieSearchResponse>> getPopularMovies(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "50") int size) {
-
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "rating"));
-        Page<Movie> moviePage = this.movieService.findAll(pageable);
-
-        List<MovieSearchResponse> responses = moviePage.getContent()
-                .stream()
-                .map(mapper::toSearchResponse)
+    @Operation(summary = "50 most popular film", description = "Return with 50 most popular movies by paging or without paging if page is not added.")
+    public ResponseEntity<List<MovieSearchResponse>> getTopPopularMovies(
+            @RequestParam @Nullable Integer page
+    ) {
+        List<Movie> topMovies = movieService.getTop50PopularMovies();
+        List<MovieSearchResponse> allResponses = topMovies.stream()
+                .map(movie -> new MovieSearchResponse(
+                        movie.getId(),
+                        movie.getRating(),
+                        movie.getReleaseDate() != null ? movie.getReleaseDate().toString() : null,
+                        movie.getTitle(),
+                        movie.getPosterUrl()
+                ))
                 .toList();
 
-        PagedResponse<MovieSearchResponse> pagedResponse = new PagedResponse<>(
-                responses,
-                moviePage.getNumber(),
-                moviePage.getSize(),
-                moviePage.getTotalElements(),
-                moviePage.getTotalPages(),
-                moviePage.isLast()
-        );
+        if(page==null) {
+            return ResponseEntity.ok(allResponses);
+        }
 
-        return ResponseEntity.ok(pagedResponse);
+        int fromIndex = page * 10;
+        int toIndex = Math.min(fromIndex + 10, allResponses.size());
+        if (fromIndex > allResponses.size()) {
+            return ResponseEntity.ok(List.of()); // üres oldal
+        }
+
+        List<MovieSearchResponse> paged = allResponses.subList(fromIndex, toIndex);
+        return ResponseEntity.ok(paged);
     }
+
 
 }

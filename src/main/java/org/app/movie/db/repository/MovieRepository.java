@@ -12,4 +12,7 @@ import java.util.UUID;
 public interface MovieRepository extends JpaRepository<Movie, UUID> {
     List<Movie> findByTitleContainingIgnoreCase(String query);
 
+    List<Movie> findTop50ByOrderByRatingDesc();
+
+
 }

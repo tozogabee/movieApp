@@ -77,9 +77,10 @@ public class MovieServiceImpl implements MovieService{
     }
 
     @Override
-    public Page<Movie> findAll(Pageable pageAble) {
-        return this.movieRepository.findAll(pageAble);
+    public List<Movie> getTop50PopularMovies() {
+        return this.movieRepository.findTop50ByOrderByRatingDesc();
     }
+
 
     private Map<String, String> parseFilterString(String filter) {
         Map<String, String> filters = new HashMap<>();
