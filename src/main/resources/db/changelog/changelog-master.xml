@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="create-table" author="tozogabee@gmail.com">
+        <sqlFile
+                path="../../db/changelog/sql/create_movie.sql"
+                relativeToChangelogFile="true"/>
+    </changeSet>
+    <changeSet id="insert-movies" author="tozogabee@gmail.com">
+        <sqlFile
+                path="../../db/changelog/sql/insert_movies.sql"
+                relativeToChangelogFile="true"/>
+    </changeSet>
+</databaseChangeLog>
