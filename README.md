@@ -130,12 +130,6 @@ Use that key in all your requests as `?api_key=...`.
 
 ---
 
-## 📬 Contact
-
-**Developer**: Gábor Tóth  
-📧 tozogabee@gmail.com  
-🔗 [GitHub Repo](https://github.com/tozogabee/movieApp)
-
 ## 🗃️ Database Schema
 
 The Movie entity
@@ -176,3 +170,9 @@ The Movie entity
       ```
 
 4. **Check the datas with h2 console**
+
+## 📬 Contact
+
+**Developer**: Gábor Tóth  
+📧 tozogabee@gmail.com  
+🔗 [GitHub Repo](https://github.com/tozogabee/movieApp)
